@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Portfolio admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0705;--g:rgba(255,255,255,.06);--l:rgba(255,255,255,.16);--m:#c2b7ad;--a:#fd6f00}
+*{box-sizing:border-box;margin:0}body{background:radial-gradient(80% 60% at 90% 100%,#4a1a05,#0a0705 70%) fixed;color:#fff;font:400 .95rem/1.6 Poppins,system-ui,sans-serif;padding:clamp(16px,4vw,48px);min-height:100vh}
+h1{font-size:1.6rem;font-weight:600}h2{font-size:1.15rem;font-weight:600;margin-bottom:14px}.m{color:var(--m)}
+.card{background:var(--g);border:1px solid var(--l);border-radius:18px;padding:22px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;max-width:1200px;margin:0 auto 22px}
+.wrap{max-width:1200px;margin:0 auto}
+.lay{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:22px;align-items:start}@media(max-width:900px){.lay{grid-template-columns:1fr}}
+label{display:block;font-weight:500;margin:12px 0 4px;font-size:.85rem}
+input,select,textarea{width:100%;background:#17100b;color:#fff;border:1px solid var(--l);border-radius:10px;padding:10px 12px;font:inherit}
+textarea{min-height:90px;resize:vertical}input[type=file]{padding:8px}input[type=checkbox]{width:auto}
+:focus-visible{outline:3px solid var(--a);outline-offset:2px}
+button{font:500 .9rem Poppins,sans-serif;border-radius:99px;padding:9px 20px;cursor:pointer;border:1px solid var(--l);background:none;color:#fff}
+button.p{background:var(--a);border-color:var(--a);color:#1a0c02}button.d{color:#ff8a8a}button:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.it{display:grid;grid-template-columns:84px 1fr;gap:14px;padding:12px 0;border-top:1px solid var(--l)}.it:first-of-type{border:0}
+.it img{width:84px;height:56px;object-fit:cover;border-radius:8px;background:#000}.it b{font-weight:500}.tag{font-size:.75rem;color:var(--a)}
+.it .row{margin-top:8px}.it button{padding:4px 12px;font-size:.8rem}
+#msg{position:sticky;top:10px;z-index:5;max-width:1200px;margin:0 auto 14px;padding:12px 16px;border-radius:12px;background:#1d140e;border:1px solid var(--l)}#msg.err{border-color:#ff6b6b;color:#ffb4b4}#msg.ok{border-color:#4cc9b8}
+details{margin-top:14px;color:var(--m)}summary{cursor:pointer;color:#fff}ol{padding-left:20px;margin-top:8px}code{background:#17100b;padding:1px 6px;border-radius:5px}
+#pv{max-width:100%;max-height:140px;border-radius:8px;margin-top:8px}
+</style></head><body>
+<div class="top"><h1>Portfolio admin</h1><a class="m" href="index.html">View site</a></div>
+<div id="msg" role="status" hidden></div>
+<div class="wrap">
+<section id="conn" class="card" style="max-width:560px"><h2>Connect to GitHub</h2>
+<label for="o">GitHub username</label><input id="o" value="sabshanto">
+<label for="r">Repository</label><input id="r" value="Personal-Portfolio-1">
+<label for="b">Branch</label><input id="b" value="master">
+<label for="t">Access token</label><input id="t" type="password" autocomplete="off" placeholder="github_pat_...">
+<label><input type="checkbox" id="rem"> Remember on this device only</label>
+<div class="row"><button class="p" id="go">Connect</button></div>
+<details><summary>How to get a token</summary><ol><li>GitHub, Settings, Developer settings, Fine-grained tokens, Generate new token.</li><li>Repository access: only <code>Personal-Portfolio-1</code>.</li><li>Permissions, Repository, Contents: <b>Read and write</b>.</li><li>Copy the token and paste it above. It is never saved in your repo.</li></ol></details></section>
+<div id="panel" class="lay" hidden>
+<form id="f" class="card"><h2 id="ft">Add new work</h2>
+<label for="k">Category</label><select id="k"><option value="video">Video</option><option value="design">Design</option><option value="marketing">Marketing</option><option value="web">Web</option></select>
+<label for="ti">Title</label><input id="ti" required>
+<label for="d">Description</label><textarea id="d" required></textarea>
+<label for="tl">Tools used</label><input id="tl" placeholder="Premiere Pro, CapCut">
+<label for="yt">YouTube link (for videos)</label><input id="yt" placeholder="https://youtu.be/...">
+<label for="g">Group (optional)</label><input id="g" list="gl" placeholder="e.g. Design for Nitsol Bangladesh Limited"><datalist id="gl"></datalist>
+<label for="ar">Image shape</label><select id="ar"><option value="h">Widescreen</option><option value="s">Square (1:1)</option><option value="v">Vertical (9:16)</option></select>
+<label for="lk">Project link (optional)</label><input id="lk" placeholder="https://...">
+<label for="im">Image (thumbnail or design)</label><input id="im" type="file" accept="image/*"><img id="pv" alt="" hidden>
+<p class="m" style="font-size:.8rem;margin-top:4px">For videos, leave the image empty to use the YouTube thumbnail.</p>
+<div class="row"><button class="p" id="sv" type="submit">Save work</button><button type="button" id="cn" hidden>Cancel edit</button></div></form>
+<section class="card"><h2>Your work <span class="m" id="cnt"></span></h2><div id="list"></div></section></div></div>
+<script>
+const $=id=>document.getElementById(id);let cfg,works=[],edit=null;
+const b64=s=>{let t='';new TextEncoder().encode(s).forEach(c=>t+=String.fromCharCode(c));return btoa(t)};
+const unb64=s=>new TextDecoder().decode(Uint8Array.from(atob(s.replace(/\n/g,'')),c=>c.charCodeAt(0)));
+const say=(t,c='')=>{const m=$('msg');m.hidden=!t;m.textContent=t;m.className=c};
+const url=p=>`https://api.github.com/repos/${cfg.o}/${cfg.r}/contents/${p.split('/').map(encodeURIComponent).join('/')}`;
+const hd=()=>({Authorization:'Bearer '+cfg.t,Accept:'application/vnd.github+json'});
+async function getF(p){const r=await fetch(url(p)+'?ref='+cfg.b+'&t='+Date.now(),{headers:hd()});if(r.status===404)return null;if(!r.ok)throw Error('GitHub said '+r.status+'. Check your token and repo name.');return r.json()}
+async function putF(p,content,msg,sha){const r=await fetch(url(p),{method:'PUT',headers:hd(),body:JSON.stringify({message:msg,content,branch:cfg.b,...(sha?{sha}:{})})});if(!r.ok)throw Error('Could not save '+p+' ('+r.status+').');return r.json()}
+async function delF(p,msg){try{const f=await getF(p);if(f)await fetch(url(p),{method:'DELETE',headers:hd(),body:JSON.stringify({message:msg,sha:f.sha,branch:cfg.b})})}catch(e){}}
+async function load(){const f=await getF('works.json');works=f?JSON.parse(unb64(f.content)):[];draw()}
+async function saveList(list,msg){const f=await getF('works.json');await putF('works.json',b64(JSON.stringify(list,null,2)+'\n'),msg,f&&f.sha);works=list;draw()}
+const ytId=s=>{s=s.trim();const m=s.match(/(?:youtu\.be\/|v=|embed\/|shorts\/)([\w-]{11})/);return m?m[1]:/^[\w-]{11}$/.test(s)?s:''};
+async function shrink(file,max=1600){const bm=await createImageBitmap(file);const s=Math.min(1,max/bm.width);const c=document.createElement('canvas');c.width=Math.round(bm.width*s);c.height=Math.round(bm.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(bm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.88).split(',')[1]}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function draw(){$('gl').innerHTML=[...new Set(works.map(w=>w.g).filter(Boolean))].map(g=>'<option value="'+esc(g)+'">').join('');$('cnt').textContent='('+works.length+')';$('list').innerHTML=works.length?works.map((w,i)=>`<div class="it"><img src="${esc(w.img)}" alt="" onerror="this.onerror=null;this.src=this.src.replace('maxresdefault','hqdefault')"><div><span class="tag">${esc(w.k)}</span><br><b>${esc(w.t)}</b><div class="row"><button data-a="e" data-i="${i}">Edit</button><button data-a="u" data-i="${i}" ${i?'':'disabled'}>Up</button><button data-a="n" data-i="${i}" ${i<works.length-1?'':'disabled'}>Down</button><button class="d" data-a="x" data-i="${i}">Delete</button></div></div></div>`).join(''):'<p class="m">No work yet. Add your first project.</p>'}
+function reset(){edit=null;$('f').reset();$('pv').hidden=true;$('ft').textContent='Add new work';$('cn').hidden=true}
+$('im').onchange=e=>{const f=e.target.files[0];$('pv').hidden=!f;if(f)$('pv').src=URL.createObjectURL(f)};
+$('cn').onclick=reset;
+$('go').onclick=async()=>{cfg={o:$('o').value.trim(),r:$('r').value.trim(),b:$('b').value.trim(),t:$('t').value.trim()};if(!cfg.t)return say('Paste your access token first.','err');try{say('Connecting...');await load();if($('rem').checked)localStorage.setItem('adm',JSON.stringify(cfg));$('conn').hidden=true;$('panel').hidden=false;say('Connected to '+cfg.o+'/'+cfg.r+'.','ok')}catch(e){say(e.message,'err')}};
+$('list').onclick=async e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i,a=b.dataset.a,w=works[i];
+if(a==='e'){edit=i;$('ft').textContent='Edit work';$('k').value=w.k;$('ti').value=w.t;$('d').value=w.d;$('tl').value=w.tools||'';$('yt').value=w.yt?(w.ar==='v'?'https://youtube.com/shorts/':'https://youtu.be/')+w.yt:'';$('lk').value=w.link||'';$('g').value=w.g||'';$('ar').value=w.ar||'h';$('cn').hidden=false;$('pv').src=w.img;$('pv').hidden=false;scrollTo({top:0,behavior:'smooth'});return}
+try{if(a==='u'||a==='n'){const l=[...works],j=a==='u'?i-1:i+1;[l[i],l[j]]=[l[j],l[i]];say('Reordering...');await saveList(l,'Reorder work');say('Saved. The site updates in about a minute.','ok')}
+if(a==='x'){if(!confirm('Delete "'+w.t+'"?'))return;say('Deleting...');await saveList(works.filter((_,j)=>j!==i),'Delete work: '+w.t);if(w.img.startsWith('images/works/'))await delF(w.img,'Delete image');say('Deleted. The site updates in about a minute.','ok')}}catch(er){say(er.message,'err')}};
+$('f').onsubmit=async e=>{e.preventDefault();const btn=$('sv');btn.disabled=true;try{
+const yt=ytId($('yt').value);if($('yt').value.trim()&&!yt)throw Error('That YouTube link was not recognised.');
+const old=edit!=null?works[edit]:null;let img=old?old.img:'';const file=$('im').files[0];
+if(file){say('Uploading image...');const slug=$('ti').value.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'work';img='images/works/'+slug+'-'+Date.now().toString(36)+'.jpg';await putF(img,await shrink(file),'Add image: '+$('ti').value)}
+else if(yt&&(!img||img.includes('ytimg.com')))img='https://i.ytimg.com/vi/'+yt+'/maxresdefault.jpg';
+if(!img)throw Error('Add an image, or a YouTube link for videos.');
+const w={id:old?old.id:Date.now().toString(36),t:$('ti').value.trim(),k:$('k').value,img,d:$('d').value.trim(),tools:$('tl').value.trim(),yt,ar:yt?(/shorts\//.test($('yt').value)?'v':'h'):$('ar').value,g:$('g').value.trim(),link:$('lk').value.trim()};
+say('Saving...');const l=[...works];old?l[edit]=w:l.unshift(w);await saveList(l,(old?'Update work: ':'Add work: ')+w.t);
+if(old&&file&&old.img.startsWith('images/works/'))await delF(old.img,'Remove replaced image');
+reset();say('Saved. The site updates in about a minute.','ok')}catch(er){say(er.message,'err')}finally{btn.disabled=false}};
+try{const s=JSON.parse(localStorage.getItem('adm')||'null');if(s){$('o').value=s.o;$('r').value=s.r;$('b').value=s.b;$('t').value=s.t;$('rem').checked=true}}catch(e){}
+</script></body></html>
